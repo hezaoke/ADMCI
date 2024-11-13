@@ -1,0 +1,69 @@
+1. Set Up Git in RStudio
+
+git config --global user.name "Your Name"
+git config --global user.email "your.email@example.com"
+
+2. Link RStudio to Git
+
+Open RStudio and navigate to Tools > Global Options.
+Go to the Git/SVN section and set the path to your git executable if not automatically detected (e.g., /usr/bin/git or C:\Program Files\Git\bin\git.exe).
+
+If you see git executable different from the example, e.g., /opt/homebrew/bin/git
+
+check if your git is accessible:
+
+/opt/homebrew/bin/git --version
+
+Otherwise install git via homebrew:
+brew install git
+
+3. Create a Repository
+
+Create a New Project with Git:
+Go to File > New Project > New Directory > New Project.
+Select the checkbox for “Create a git repository” and create a project with git repository in your local computer.
+
+Because I've already created a repository in Github, you can clone the repository to your local computer:
+
+Clone an Existing GitHub Repository:
+Go to File > New Project > Version Control > Git.
+Enter the URL of the GitHub repository and specify the local directory.
+
+The URL of the GitHub repository is: https://github.com/hezaoke/ADMCI/
+
+4. Use Git in RStudio
+
+Stage and Commit Changes:
+Once you make a significant change that you would like to keep track of in your project or your code, you can go to the “Git” pane in RStudio.
+
+Select the files you want to stage by checking them.
+Click “Commit” and write a commit message.
+Push to GitHub:
+After committing, click the “Push” button to send your changes to GitHub.
+Pull Changes:
+The above stages are usually sufficient for you to keep track of the results Use the “Pull” button to fetch and integrate changes from GitHub to your local project.
+
+You can also use the terminal in RStudio to commit and push:
+
+a. link to an existing GitHub repository:
+
+git remote add origin https://github.com/username/repo-name.git
+In our case, replace the URI with https://github.com/hezaoke/ADMCI.git
+git remote add origin https://github.com/hezaoke/ADMCI.git
+
+git branch -M main  # Optional: ensures your branch is named 'main'
+git push -u origin main
+
+b. create a new branch for yourself
+You will need to make revisions to your own code which will not change the main branch. You can clone all the files from the main and create a new branch for yourself with the following code in the terminal (replace new-branch-name with your chosen name):
+git checkout -b new-branch-name
+
+c. to commit changes:
+Once start coding or changing the code, you want to constantly track the changes you make. This is done by the following code in terminal:
+git add .
+git commit -m "your-commit-message"
+
+d. to push changes:
+git push -u origin branch-name
+
+
