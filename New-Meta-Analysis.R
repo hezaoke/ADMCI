@@ -8,7 +8,12 @@
 install.packages("metafor")
 library(metafor)
 library(dplyr)
-
+# Example: NE vs MCI
+meta_NE_MCI <- metacont(
+  n.e = NE_n, mean.e = NE_mean, sd.e = NE_sd,
+  n.c = MCI_n, mean.c = MCI_mean, sd.c = MCI_sd,
+  studlab = study_id, data = your_data %>% filter(Comparison == "NE_vs_MCI")
+)
 
 datafile = "C:/Users/Camel/Downloads/Final Testing Sheet - ALL.csv"
 dat = read.csv(datafile)
