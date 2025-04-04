@@ -1,0 +1,80 @@
+# Load required packages
+install.packages("metafor")
+install.packages("dplyr")
+library(metafor)
+library(dplyr)
+
+# Load data
+datafile <- "C:/Users/Camel/Downloads/Final Testing Sheet - ALL.csv"
+dat <- read.csv(datafile)
+
+# Define comparisons of interest
+comparisons <- c("Control vs MCI", "Control vs AD", "MCI vs AD", 
+                "MCI vs mAD", "Control vs mAD", "AD vs mAD")
+
+# Initialize list to store results
+results <- list()
+
+# Perform analysis for each comparison type
+for (comp_type in comparisons) {
+  
+  # Filter data for current comparison
+  filtered_data <- dat %>% filter(ComparisonType == comp_type)
+  
+  # Calculate effect sizes (Hedges' g)
+  dat_es <- escalc(
+    measure = "SMDH",
+    m1i = Group.Mean.1, sd1i = SD.1, n1i = Group.Size.1,
+    m2i = Group.Mean.2, sd2i = SD.2, n2i = Group.Size.2,
+    data = filtered_data
+  )
+  
+  # Run random-effects meta-analysis
+  meta_model <- rma(yi, vi, data = dat_es, method = "REML")
+  
+  # Run moderator analysis with language
+  meta_lang <- rma(yi, vi, mods = ~ Language, data = dat_es, method = "REML")
+  
+  # Store results
+  results[[comp_type]] <- list(
+    data = dat_es,
+    meta_model = meta_model,
+    meta_lang = meta_lang
+  )
+  
+  # Create clean filename with periods
+  clean_name <- gsub(" ", ".", comp_type)
+  
+  # Generate forest plot
+  png(paste0("forest.", clean_name, ".png"), width = 1000, height = 600)
+  forest(meta_model, main = paste("Forest Plot:", comp_type))
+  dev.off()
+  
+  # Generate funnel plot
+  png(paste0("funnel.", clean_name, ".png"), width = 800, height = 800)
+  funnel(meta_model, main = paste("Funnel Plot:", comp_type))
+  dev.off()
+}
+
+# Create multi-panel comparison of all effect sizes
+png("multi.panel.comparison.png", width = 1200, height = 1600)
+par(mfrow = c(3, 2))
+for (comp_type in comparisons) {
+  forest(results[[comp_type]]$meta_model, 
+         main = comp_type,
+         xlab = "Hedges' g (95% CI)")
+}
+dev.off()
+
+# Generate summary tables
+summary_table <- data.frame(
+  Comparison = comparisons,
+  k = sapply(results, function(x) x$meta_model$k),
+  g = sapply(results, function(x) x$meta_model$b[1]),
+  CI.lower = sapply(results, function(x) x$meta_model$ci.lb),
+  CI.upper = sapply(results, function(x) x$meta_model$ci.ub),
+  I2 = sapply(results, function(x) x$meta_model$I2),
+  tau2 = sapply(results, function(x) x$meta_model$tau2)
+)
+
+write.csv(summary_table, "meta.analysis.summary.csv", row.names = FALSE)
