@@ -8,36 +8,51 @@
 install.packages("metafor")
 library(metafor)
 library(dplyr)
-#NE vs MCI
-meta_NE_MCI <- metacont(
-  n.e = NE_n, mean.e = NE_mean, sd.e = NE_sd,
-  n.c = MCI_n, mean.c = MCI_mean, sd.c = MCI_sd,
-  studlab = study_id, data = your_data %>% filter(Comparison == "NE_vs_MCI")
-)
-#NE vs AD
-meta_NE_MCI <- metacont(
-  n.e = NE_n, mean.e = NE_mean, sd.e = NE_sd,
-  n.c = MCI_n, mean.c = MCI_mean, sd.c = MCI_sd,
-  studlab = study_id, data = your_data %>% filter(Comparison == "NE_vs_MCI")
-)
-#MCI vs AD
-meta_NE_MCI <- metacont(
-  n.e = NE_n, mean.e = NE_mean, sd.e = NE_sd,
-  n.c = MCI_n, mean.c = MCI_mean, sd.c = MCI_sd,
-  studlab = study_id, data = your_data %>% filter(Comparison == "NE_vs_MCI")
-)
-#MCI vs mAD
-meta_NE_MCI <- metacont(
-  n.e = NE_n, mean.e = NE_mean, sd.e = NE_sd,
-  n.c = MCI_n, mean.c = MCI_mean, sd.c = MCI_sd,
-  studlab = study_id, data = your_data %>% filter(Comparison == "NE_vs_MCI")
-)
-#NE vs mAD
-meta_NE_MCI <- metacont(
-  n.e = NE_n, mean.e = NE_mean, sd.e = NE_sd,
-  n.c = MCI_n, mean.c = MCI_mean, sd.c = MCI_sd,
-  studlab = study_id, data = your_data %>% filter(Comparison == "NE_vs_MCI")
-)
+
+
+#Step 1 Calculate SE for Each Effect Sized and Convert Cohen's D into Hedge's G
+your_data$SE <- sqrt(
+  (your_data$Group_Size_1 + your_data$Group_Size_2) / 
+    (your_data$Group_Size_1 * your_data$Group_Size_2) +
+  (your_data$Effect_Size_New^2) / 
+    (2 * (your_data$Group_Size_1 + your_data$Group_Size_2))
+your_data$Effect_Size_New <- your_data$Effect_Size_New * 
+  (1 - 3 / (4 * (your_data$Group_Size_1 + your_data$Group_Size_2) - 9))
+#Step 2 Split Data by Comparison Type
+comparisons <- c("NE_vs_MCI", "NE_vs_AD", "MCI_vs_AD", "MCI_vs_mAD", "NE_vs_mAD", "AD_vs_mAD")
+dat_list <- lapply(comparisons, function(comp) {
+  subset(your_data, Comparison == comp)
+})
+names(dat_list) <- comparisons
+#Step 3 Run Meta-Analysis for Each Comparison
+library(metafor)
+
+meta_list <- lapply(dat_list, function(df) {
+  rma(
+    yi = Effect_Size_New,  # Your Hedges’ g or Cohen’s d
+    sei = SE,              # Calculated SE
+    data = df,
+    method = "REML"        # Random-effects model
+  )
+})
+names(meta_list) <- paste0("meta_", gsub("_vs_", "_", comparisons))
+#Step 4 Generate Multi-Panel Forest Plot
+par(mfrow = c(3, 2), mar = c(4, 4, 2, 2))  # Adjust margins
+
+for (i in seq_along(meta_list)) {
+  forest(
+    meta_list[[i]],
+    main = names(meta_list)[i],
+    xlab = "SMD (95% CI)",
+    slab = dat_list[[i]]$Study  # Show study labels
+  )
+  # Add heterogeneity stats
+  text(-4, -1, pos = 4, cex = 0.8,
+       paste("I² =", round(meta_list[[i]]$I2, 1), "%",
+            "τ² =", round(meta_list[[i]]$tau2, 2)))
+}
+  
+  
 datafile = "C:/Users/Camel/Downloads/Final Testing Sheet - ALL.csv"
 dat = read.csv(datafile)
 View(dat)
